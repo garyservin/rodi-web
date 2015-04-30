@@ -31,10 +31,10 @@
 #define SERVO_LEFT_PIN 5
 #define SERVO_STOP 0
 
-#define SPEAKER_PIN 2
+#define SPEAKER_PIN 11
 
-#define SEE_ECHO_PIN A0
-#define SEE_TRIGGER_PIN A2
+#define SEE_ECHO_PIN A5
+#define SEE_TRIGGER_PIN A4
 #define SEE_SHORT_DELAY 2
 #define SEE_LONG_DELAY 10
 #define SEE_MAX_DISTANCE 100
