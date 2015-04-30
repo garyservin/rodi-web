@@ -65,21 +65,21 @@ char server_buffer[SERVER_BUFFER_SMALL];
 char server_response_content[SERVER_BUFFER_SMALL];
 
 char server_response_template[] =
-"HTTP/1.1 200 OK\n"
-"Connection: close\n"
-"Content-Type: application/json\n"
-"Content-Length: %d\n"
-"Access-Control-Allow-Origin: *\n"
-"\n"
+"HTTP/1.1 200 OK\r\n"
+"Connection: close\r\n"
+"Content-Type: application/json\r\n"
+"Content-Length: %d\r\n"
+"Access-Control-Allow-Origin: *\r\n"
+"\r\n"
 "%s";
 
 char server_response_template_bad[] =
-"HTTP/1.1 400 Bad Request\n"
-"Connection: close\n"
-"Content-Type: application/json\n"
-"Content-Length: 0\n"
-"Access-Control-Allow-Origin: *\n"
-"\n"
+"HTTP/1.1 400 Bad Request\r\n"
+"Connection: close\r\n"
+"Content-Type: application/json\r\n"
+"Content-Length: 0\r\n"
+"Access-Control-Allow-Origin: *\r\n"
+"\r\n"
 "";
 
 int blink_last_state;
@@ -240,9 +240,10 @@ void loop()
           break;
         }
         case ACTION_SING: {
-          tone(SPEAKER_PIN, request_params.value1, request_params.value2);
+          tone(SPEAKER_PIN, request_params.value1, 100);
 
-          SERVER_RESPONSE_OK("");
+          sprintf(server_response_content, "%d", request_params.value2);
+          SERVER_RESPONSE_OK(server_response_content);
           break;
         }
         case ACTION_SEE: {
