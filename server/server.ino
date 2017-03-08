@@ -25,7 +25,9 @@
 #include <MPU6050.h>
 #include <Wire.h>
 
-#define SERVER_BUFFER_BIG 256
+#define API "API_V1.2"
+
+#define SERVER_BUFFER_BIG 512
 #define SERVER_BUFFER_SMALL 32
 
 #define SENSOR_RIGHT_PIN A6
@@ -60,6 +62,9 @@
 #define ACTION_SENSE_LIGHT 7
 #define ACTION_LED 8
 #define ACTION_IMU 9
+#define ACTION_CHECK_OK 10
+#define ACTION_GET_API 11
+#define ACTION_SING_MUSIC 54
 
 #define SERVER_RESPONSE_OK(content) server_set_response(content)
 #define SERVER_RESPONSE_BAD() Serial.print(server_response_template_bad)
@@ -95,6 +100,35 @@ char server_response_template_bad[] =
 "\n"
 "";
 
+char api_info_1[] =
+"API version 1.2\n"
+"- Blink\n"
+"\tGET /1/<rate>/\n"
+"- Line\n"
+"\tGET /2/\n"
+"- Move\n"
+"\tGET /3/<left>/<right>/\n"
+"- Sing\n"
+"\tGET /4/<note>/<duration>/\n";
+
+char api_info_2[] =
+"- Distance\n"
+"\tGET /5/\n"
+"- Pixel\n"
+"\tGET /6/<red>/<green>/<blue>/\n"
+"- Light\n"
+"\tGET /7/\n";
+
+char api_info_3[] =
+"- Led\n"
+"\tGET /8/<state[0|1]>/\n"
+"- IMU\n"
+"\tGET /9/\n"
+"- Check OK\n"
+"\tGET /10/\n"
+"- API\n"
+"\tGET /11/\n";
+
 int blink_last_state;
 int blink_last_rate;
 int blink_is_off;
@@ -114,6 +148,39 @@ int16_t ax, ay, az;
 int16_t gx, gy, gz;
 int16_t temperature;
 char enable_imu = 0;
+
+// Array with the notes in the melody (see pitches.h for reference)
+int melody[] = {440, 440, 440, 349, 523, 440, 349, 523, 440, 659, 659, 659, 698, 523, 440, 349, 523, 440};
+
+// Array with the note durations: a quarter note has a duration of 4, half note 2 etc.
+int tempo[]  = {4, 4, 4, 5, 16, 4, 5, 16, 2, 4, 4, 4, 5, 16, 4, 5, 16, 2};
+
+int BPM = 120;
+
+void sing_music()
+{
+    int size = sizeof(melody) / sizeof(int);
+    for (int thisNote = 0; thisNote < size; thisNote++) {
+
+      // For details on calculating the note duration using the tempo and the note type,
+      // see http://bradthemad.org/guitar/tempo_explanation.php.
+      // A quarter note at 60 BPM lasts exactly one second and at 120 BPM - half a second.
+    
+      // int noteDuration = 1000 / tempo[thisNote];
+      int noteDuration = (int)((1000 * (60 * 4 / BPM)) / tempo[thisNote] + 0.);
+
+      tone(SPEAKER_PIN, melody[thisNote], noteDuration);
+
+      // to distinguish the notes, set a minimum time between them.
+      // the note's duration + 30% seems to work well:
+      int pauseBetweenNotes = noteDuration * 1.20;
+      delay(pauseBetweenNotes);
+
+      // stop the tone playing:
+      noTone(SPEAKER_PIN);
+      digitalWrite(LED_PIN, HIGH-digitalRead(LED_PIN));
+    }
+}
 
 void setup()
 {
@@ -322,6 +389,21 @@ void loop()
           }
           sprintf(server_response_content, "[%d, %d, %d, %d, %d, %d, %d]", ax, ay, ax, gx, gy, gz, temperature);
           SERVER_RESPONSE_OK(server_response_content);
+          break;
+        }
+        case ACTION_CHECK_OK: {
+          sprintf(server_response_content, "OK");
+          SERVER_RESPONSE_OK(server_response_content);
+          break;
+        }
+        case ACTION_GET_API: {
+          sprintf(server_response_content, "%s%s%s", api_info_1, api_info_2, api_info_3);
+          SERVER_RESPONSE_OK(server_response_content);
+          break;
+        }
+        case ACTION_SING_MUSIC: {
+          SERVER_RESPONSE_OK("");
+          sing_music();
           break;
         }
         default: {
